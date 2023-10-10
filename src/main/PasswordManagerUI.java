@@ -1,3 +1,5 @@
+package main;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -5,22 +7,21 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
 import java.util.List;
 import java.util.Optional;
 
-public class PasswordManagerApp extends Application {
-    private PasswordManager passwordManager;
+public class PasswordManagerUI extends Application {
+    private PassLogic passLogic;
 
 
-    public static void main(String[] args) {
-        launch(args);
+    public PasswordManagerUI(PassLogic passLogic) {
+        this.passLogic = passLogic;
     }
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Password Manager");
-
-        passwordManager = new PasswordManager();
 
         Button generateButton = new Button("Generate Password");
         Button encryptButton = new Button("Encrypt Password");
@@ -29,15 +30,23 @@ public class PasswordManagerApp extends Application {
         Button deleteButton = new Button("Delete Password");
 
         // Set up button actions
+        // Add a copy button to allow the user to copy the generated password
         generateButton.setOnAction(e -> {
-            String generatedPassword = passwordManager.generatePassword();
+            String generatedPassword = passLogic.generatePassword();
             showAlert("Generated Password", "Your generated password is:\n" + generatedPassword);
         });
 
         encryptButton.setOnAction(e -> {
-            String passwordToEncrypt = // Get the password to encrypt from the user
-                    String encryptedPassword = passwordManager.encryptPassword(passwordToEncrypt);
-            showAlert("Encrypted Password", "Your encrypted password is:\n" + encryptedPassword);
+            TextInputDialog inputDialog = new TextInputDialog();
+            inputDialog.setTitle("Enter Password to Encrypt");
+            inputDialog.setHeaderText(null);
+            inputDialog.setContentText("Password:");
+
+            Optional<String> result = inputDialog.showAndWait();
+            result.ifPresent(passwordToEncrypt -> {
+                String encryptedPassword = passLogic.encryptPassword(passwordToEncrypt);
+                showAlert("Encrypted Password", "Your encrypted password is:\n" + encryptedPassword);
+            });
         });
 
         storeButton.setOnAction(e -> {
@@ -68,9 +77,8 @@ public class PasswordManagerApp extends Application {
                 String username = usernameResult.get();
                 String password = passwordResult.get();
 
-                // Create a new PasswordEntry object and attempt to store it in the database
-                PasswordEntry newPasswordEntry = new PasswordEntry(website, username, password);
-                boolean success = passwordManager.storePassword(newPasswordEntry);
+                // Call the storePassword method in PassLogic
+                boolean success = passLogic.storePassword(website, username, password);
 
                 if (success) {
                     showAlert("Password Stored", "Password successfully stored.");
@@ -86,27 +94,41 @@ public class PasswordManagerApp extends Application {
 
         searchButton.setOnAction(e -> {
             // Show a search dialog or form for the user to search for passwords
-            String searchQuery = // Get the search query from the user
-                    List<PasswordEntry> searchResults = passwordManager.searchPasswords(searchQuery);
+            TextInputDialog searchDialog = new TextInputDialog();
+            searchDialog.setTitle("Search Passwords");
+            searchDialog.setHeaderText(null);
+            searchDialog.setContentText("Enter a search query:");
 
-            // Display search results to the user
-            if (searchResults != null && !searchResults.isEmpty()) {
-                // Implement code to display search results in a user-friendly way (e.g., in a dialog or table)
-            } else {
-                showAlert("No Results", "No passwords matching the search query found.");
-            }
+            Optional<String> result = searchDialog.showAndWait();
+            result.ifPresent(searchQuery -> {
+                List<PasswordEntry> searchResults = passLogic.searchPasswords(searchQuery);
+
+                // Display search results to the user
+                if (searchResults != null && !searchResults.isEmpty()) {
+                    // Implement code to display search results in a user-friendly way (e.g., in a dialog or table)
+                } else {
+                    showAlert("No Results", "No passwords matching the search query found.");
+                }
+            });
         });
 
         deleteButton.setOnAction(e -> {
             // Show a dialog or form for the user to select a password to delete
-            PasswordEntry passwordToDelete = // Get the password to delete from the user
-            boolean success = passwordManager.deletePassword(passwordToDelete);
+            TextInputDialog deleteDialog = new TextInputDialog();
+            deleteDialog.setTitle("Delete Password");
+            deleteDialog.setHeaderText(null);
+            deleteDialog.setContentText("Enter the website to delete:");
 
-            if (success) {
-                showAlert("Password Deleted", "Password successfully deleted.");
-            } else {
-                showAlert("Error", "Failed to delete password. Please try again.");
-            }
+            Optional<String> result = deleteDialog.showAndWait();
+            result.ifPresent(websiteToDelete -> {
+                boolean success = passLogic.deletePassword(websiteToDelete);
+
+                if (success) {
+                    showAlert("Password Deleted", "Password for " + websiteToDelete + " successfully deleted.");
+                } else {
+                    showAlert("Error", "Failed to delete password. Please try again.");
+                }
+            });
         });
 
         VBox vbox = new VBox(10);
