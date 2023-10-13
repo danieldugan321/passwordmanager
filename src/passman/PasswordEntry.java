@@ -1,4 +1,4 @@
-package main;
+package passman;
 
 //PasswordEntry is mainly here because it acts as the object to store the 3 values inserted into the database. Without password entry, inserting 3 values would indeed
 //overwrite the previous entries.

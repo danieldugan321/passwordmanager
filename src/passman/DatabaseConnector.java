@@ -1,4 +1,4 @@
-package main;
+package passman;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
